@@ -1,0 +1,33 @@
+Creating Direct Deposit Transmittal Files
+ 
+
+ 
+Custom- $RC_PAYINIT.OFF_CYCLE:N
+Report Began: 03:42:24.000000_AM
+Selection: A.COMPANY = '999' AND A.PAYGROUP = 'EXC' AND A.PAY_END_DT = '28-JUN-2026'
+OPRIDRMJ3965
+RUNIDrupesh_test_1
+Bank021000021
+In ELSE:999
+OPRIDRMJ3965
+RUNIDrupesh_test_1
+Bank021000021
+In New Procedure:999
+ procedure SQC-GET-PATH
+...$SQC-PGM-NAME         = DDP001
+...$SQC-SERVER         = PSUNX
+...$SQC-DBNAME         = HRPRJDEV
+...$SQC-PGM-NAME         = DDP001
+...$SQC-FILENBR         = 1
+$SQC-Returned1:::N
+$SQC-Returned2:::Y
+sql to get the PROD & NON-PROD Folder for UNIX...
+$UNX_PROD_FOLDER::: /interface/
+$UNX_NON_PROD_FOLDER::: /interface/
+$SQC-path-prefix::: /interface/
+Full SQC Path is /interface/HRPRJDEV/payroll/banking/wellsfargo/outbound/
+...$SQC-filename1         = 
+...$SQC-filename1_cont         = 
+...$SQC-path         = /interface/HRPRJDEV/payroll/banking/wellsfargo/outbound/
+FileName: /interface/HRPRJDEV/payroll/banking/wellsfargo/outbound/DDP001.001.dat
+Report Ended: 03:42:25.000000_AM
