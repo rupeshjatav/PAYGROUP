@@ -1,0 +1,55 @@
+Hi rupesh
+ 
+Good Eveninig
+ 
+I want you to analysis DDP001 in PRJDEV
+ 
+Get the sqr from PRJDEV custom sqr folder 
+ 
+These are the setup data:
+select * from PS_PAYGROUP_TBL  where  TO_CHAR(EFFDT, 'YYYYMMDD') = '20260601'  ;
+
+select * from PS_PAYGRP_EMPLTYPE where TO_CHAR(EFFDT, 'YYYYMMDD') = '20260601'  ;
+
+select * from PS_COMPANY_TBL  where  TO_CHAR(EFFDT, 'YYYYMMDD') = '20260601'  ;
+
+select * from PS_COMPANY_TBL_GL where TO_CHAR(EFFDT, 'YYYYMMDD') = '20260601'  ;
+ 
+Previously Anna has setup data in paygrp and company table as on jun 01 2026
+ 
+Cr000060
+ 
+now they are planning to change the effective on the JPM bank setup from 6/1/2026 to 11/30/2026, does this have to go back to PRJDEV?
+ 
+ok sure will check
+ 
+Hi kanmani, i have downloaded the sqr and going through it can you please tell me like what exactly should i do? do i need to change the effdt from 6 to 11 
+ 
+and i didn't understood this :does this have to go back to PRJDEV
+ 
+Hi Kanmani, i have reviewed little code, effdt is picking us as effdt <= payment date
+ 
+can you please help me to understand the requirement
+ 
+Thanks
+ 
+No problem 
+Hi Rupesh,
+Root > Payroll for North America > Payroll Processing USA > Create Direct Deposits > Create Direct Deposit File
+ 
+ 
+ 
+Root > Set Up HCM > Common Definitions > Banking > Source Bank Accounts
+ 
+Root > Set Up HCM > Common Definitions > Banking > Banks
+ 
+Root > Set Up HCM > Product Related > Payroll for North America > Payroll Processing Controls > Pay Group Table
+Find table navigation.-Company
+
+ 
+JPM Bank id: 021000021 company:999
+ 
+Thanks
+ 
+Wells fargo:121000248 company 999
+ 
