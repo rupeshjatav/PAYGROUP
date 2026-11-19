@@ -1,0 +1,550 @@
+/* SQL 1
+   Purpose:
+   Find payroll calendar rows selected by DDP001.
+   Source tables:
+     PS_PAY_CALENDAR
+     PS_PAYGROUP_TBL
+
+   Result:
+   Company, Paygroup, Pay End Date, Check Date
+   and configured source bank IDs.
+*/
+
+SELECT
+    AA.COMPANY,
+    AA.PAYGROUP,
+    AA.PAY_END_DT,
+    AA.CHECK_DT,
+    AA.RUN_ID,
+    AA.PAY_CONFIRM_RUN,
+    AA.PAY_CHECKS_RUN,
+    BB.SRC_BANK_ID,
+    BB.DD_SRC_BANK_ID,
+    BB.EFFDT AS PAYGROUP_EFFDT
+
+FROM PS_PAY_CALENDAR AA
+JOIN PS_PAYGROUP_TBL BB
+  ON BB.COMPANY = AA.COMPANY
+ AND BB.PAYGROUP = AA.PAYGROUP
+
+WHERE
+      AA.COMPANY = '&P_COMPANY'
+  AND AA.PAYGROUP = '&P_PAYGROUP'
+  AND AA.PAY_END_DT = TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+
+  /* Same effective-date rule used by DDP001 */
+  AND BB.EFFDT = (
+      SELECT MAX(BB1.EFFDT)
+      FROM PS_PAYGROUP_TBL BB1
+      WHERE BB1.COMPANY = AA.COMPANY
+        AND BB1.PAYGROUP = AA.PAYGROUP
+        AND BB1.EFF_STATUS = 'A'
+        AND BB1.EFFDT <= AA.PAY_END_DT
+  )
+
+  /* Same on-cycle/off-cycle selection */
+  AND (
+       (AA.PAY_CONFIRM_RUN = 'Y'
+        AND '&P_OFF_CYCLE' = 'N')
+       OR
+       (AA.PAY_CONFIRM_RUN = 'N'
+        AND '&P_OFF_CYCLE' = 'Y')
+  )
+
+  /* DDP001 only selects rows with this flag */
+  AND AA.PAY_CHECKS_RUN = 'N'
+
+ORDER BY
+    BB.DD_SRC_BANK_ID,
+    BB.SRC_BANK_ID,
+    AA.COMPANY,
+    AA.PAYGROUP,
+    AA.PAY_END_DT;
+
+
+
+/* SQL 2
+   Purpose:
+   Fetch bank configuration for the selected
+   Company + Paygroup + Payroll Calendar.
+
+   Source tables:
+     PS_PAY_CALENDAR
+     PS_PAYGROUP_TBL
+     PS_SRC_BANK_STG
+     PS_BANK_EC_TBL
+*/
+
+SELECT
+    A.COMPANY,
+    A.PAYGROUP,
+    A.PAY_END_DT,
+    A.CHECK_DT,
+
+    S.BANK_CD,
+    S.ACCOUNT_EC_ID,
+    S.DD_ACCOUNT_NBR,
+    S.PRENOTE_WAIT_DAYS,
+    S.IAT_IND,
+
+    BT.ALT_BANK_CD,
+
+    /* SQR calculates this as SYSDATE + 2 */
+    SYSDATE + 2 AS OFFCYCLE_CHECK_DATE
+
+FROM PS_PAY_CALENDAR A
+
+JOIN PS_PAYGROUP_TBL B
+  ON B.COMPANY = A.COMPANY
+ AND B.PAYGROUP = A.PAYGROUP
+
+JOIN PS_SRC_BANK_STG S
+  ON S.PROCESS_INSTANCE = &P_PROCESS_INSTANCE
+
+JOIN PS_BANK_EC_TBL BT
+  ON BT.BANK_CD = S.BANK_CD
+ AND BT.COUNTRY_CD = 'USA'
+
+WHERE
+      A.COMPANY = '&P_COMPANY'
+  AND A.PAYGROUP = '&P_PAYGROUP'
+  AND A.PAY_END_DT = TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+
+  AND B.EFFDT = (
+      SELECT MAX(B1.EFFDT)
+      FROM PS_PAYGROUP_TBL B1
+      WHERE B1.COMPANY = A.COMPANY
+        AND B1.PAYGROUP = A.PAYGROUP
+        AND B1.EFF_STATUS = 'A'
+        AND B1.EFFDT <= A.PAY_END_DT
+  )
+
+  AND A.PAY_CHECKS_RUN = 'N'
+
+  /* Confirm which bank ID is selected in SQL 1.
+     DDP001 uses DD_SRC_BANK_ID when populated,
+     otherwise SRC_BANK_ID.
+     This predicate must be adapted to that choice. */
+
+ORDER BY
+    A.COMPANY,
+    S.BANK_CD,
+    A.PAYGROUP;
+
+
+
+/* SQL 3
+   Purpose:
+   Fetch employee payment details for the selected
+   Company, Paygroup, Pay End Date and Process Instance.
+
+   Source:
+     PS_PAY_CHECK       E
+     PS_PAY_DISTRIB_STG F
+
+   This query reproduces the main DDP001 employee filters.
+*/
+
+SELECT
+    E.COMPANY,
+    E.EMPLID,
+    E.NAME,
+    E.EMPL_RCD,
+    E.PAY_END_DT,
+    E.PAYCHECK_NBR,
+    E.PAYCHECK_STATUS,
+    E.PAGE_NUM,
+    E.LINE_NUM,
+    E.OFF_CYCLE,
+    E.SEPCHK,
+
+    F.PAYGROUP,
+    F.ACCOUNT_TYPE,
+    F.ACCOUNT_NUM,
+    F.PRIORITY,
+    F.BANK_CD,
+    F.DEPOSIT_AMOUNT,
+    F.PAGE_NUM AS DIST_PAGE_NUM,
+    F.LINE_NUM AS DIST_LINE_NUM,
+    F.PROCESS_INSTANCE
+
+FROM PS_PAY_CHECK E,
+     PS_PAY_DISTRIB_STG F
+
+WHERE E.EMPLID = '&P_EMPLID'
+
+  /* Company selection */
+  AND E.COMPANY = '&P_COMPANY'
+  AND F.COMPANY = '&P_COMPANY'
+
+  /* Paygroup selection */
+  AND E.PAYGROUP = '&P_PAYGROUP'
+  AND F.PAYGROUP = '&P_PAYGROUP'
+
+  /* Payroll period */
+  AND E.PAY_END_DT =
+      TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+  AND F.PAY_END_DT =
+      TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+
+  /* Link paycheck row to distribution row */
+  AND F.PAGE_NUM = E.PAGE_NUM
+  AND F.LINE_NUM = E.LINE_NUM
+
+  /* Match paycheck context */
+  AND F.OFF_CYCLE = E.OFF_CYCLE
+  AND F.SEPCHK = E.SEPCHK
+
+  /* Exclude issue-check distribution */
+  AND F.ACCOUNT_TYPE <> '$'
+
+  /* Only current process instance */
+  AND F.PROCESS_INSTANCE = &P_PROCESS_INSTANCE
+
+  /* Exclude reversed paycheck status */
+  AND E.PAYCHECK_STATUS <> 'R'
+
+  /* Match run control cycle */
+  AND E.OFF_CYCLE = '&P_OFF_CYCLE'
+
+ORDER BY F.PAYCHECK_NBR;
+
+
+/* Check prior off-cycle processing for this employee */
+
+SELECT
+    RUN_ID,
+    PAY_END_DT,
+    COMPANY,
+    PAYGROUP,
+    EMPLID,
+    EMPL_RCD,
+    BANK_CD,
+    ACCOUNT_NUM,
+    PAYCHECK_NBR,
+    DEPOSIT_AMOUNT,
+    PAID_FLAG,
+    PROCESS_INSTANCE,
+    OPRID,
+    RUNCNTLID,
+    RUNDTTM
+FROM PS_BSW_DDP_OFF
+WHERE RUN_ID = '&P_RUN_ID'
+  AND EMPLID = '&P_EMPLID'
+ORDER BY RUNDTTM DESC;
+
+/* SQL 4
+   Purpose:
+   Get IAT_IND and COUNTRY_CD for the exact
+   employee distribution account selected above.
+
+   Source:
+     PS_DD_DISTRIB_STG
+*/
+
+SELECT
+    DD1.EMPLID,
+    DD1.ACCOUNT_NUM,
+    DD1.ACCOUNT_TYPE,
+    DD1.BANK_CD,
+    DD1.PRIORITY,
+    DD1.EFFDT,
+    DD1.IAT_IND,
+    DD1.COUNTRY_CD,
+    DD1.PROCESS_INSTANCE
+
+FROM PS_DD_DISTRIB_STG DD1
+
+WHERE DD1.EMPLID = '&P_EMPLID'
+
+  AND DD1.ACCOUNT_NUM = '&P_ACCOUNT_NUM'
+  AND DD1.ACCOUNT_TYPE = '&P_ACCOUNT_TYPE'
+  AND DD1.BANK_CD = '&P_BANK_CD'
+  AND DD1.PRIORITY = &P_PRIORITY
+
+  AND DD1.EFFDT = (
+      SELECT MAX(DD1D.EFFDT)
+      FROM PS_DD_DISTRIB_STG DD1D
+      WHERE DD1D.EMPLID = DD1.EMPLID
+        AND DD1D.ACCOUNT_NUM = DD1.ACCOUNT_NUM
+        AND DD1D.ACCOUNT_TYPE = DD1.ACCOUNT_TYPE
+        AND DD1D.BANK_CD = DD1.BANK_CD
+        AND DD1D.PRIORITY = DD1.PRIORITY
+        AND DD1D.PROCESS_INSTANCE = DD1.PROCESS_INSTANCE
+  )
+
+  AND DD1.PROCESS_INSTANCE = &P_PROCESS_INSTANCE;
+
+/* SQL 5
+   Purpose:
+   Retrieve bank type and bank name for the
+   selected employee's bank and country.
+*/
+
+SELECT
+    B.BANK_TYPE,
+    B.BANK_NM
+FROM PS_BANK_EC_TBL B
+WHERE B.BANK_CD = '&P_BANK_CD'
+  AND B.COUNTRY_CD = '&P_COUNTRY_CD';
+
+/* SQL 6
+   Purpose:
+   Find bank name using either the normal
+   bank code or the alternate bank code.
+*/
+
+SELECT
+    C.BANK_NM
+FROM PS_BANK_EC_TBL C
+WHERE
+      (C.BANK_CD = '&P_TRANSIT'
+       OR C.ALT_BANK_CD = '&P_TRANSIT')
+  AND C.COUNTRY_CD = 'USA';
+
+/* SQL 7
+   Purpose:
+   Check whether the employee's prenote has been
+   submitted and whether its waiting period has passed.
+*/
+
+SELECT
+    D.EMPLID,
+    D.EFFDT,
+    D.PRENOTE_STATUS,
+    D.PRENOTE_DATE,
+    D.PRENOTE_REQD,
+    D.ACCOUNT_TYPE,
+    D.BANK_CD,
+    D.ACCOUNT_NUM,
+    D.PROCESS_INSTANCE
+
+FROM PS_DD_DISTRIB_STG D
+
+WHERE D.EMPLID = '&P_EMPLID'
+
+  AND D.EFFDT <= TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+
+  AND D.BANK_CD = '&P_BANK_CD'
+
+  AND D.ACCOUNT_NUM = '&P_ACCOUNT_NUM'
+
+  AND D.PROCESS_INSTANCE = &P_PROCESS_INSTANCE
+
+ORDER BY D.EFFDT DESC;
+
+/* SQL 8
+   Purpose:
+   Select pending domestic prenote distributions
+   and the employee name and related setup.
+
+   Tables:
+     PS_DD_DISTRIB_STG
+     PS_NAMES
+     PS_PAYGROUP_TBL
+     PS_JOB
+     PS_DIRECT_DEPOSIT
+     PS_SRC_BANK_STG
+     PS_BANK_EC_TBL
+*/
+
+SELECT
+    DD.EMPLID,
+    DD.EFFDT,
+    DD.PRIORITY,
+    PD.NAME,
+    DD.ACCOUNT_TYPE,
+    DD.ACCOUNT_NUM,
+    DD.BANK_CD,
+    SB.BANK_CD AS SOURCE_BANK_CD,
+    BTB.ALT_BANK_CD
+
+FROM PS_DD_DISTRIB_STG DD,
+     PS_NAMES PD,
+     PS_PAYGROUP_TBL PT,
+     PS_JOB J,
+     PS_DIRECT_DEPOSIT PS,
+     PS_SRC_BANK_STG SB,
+     PS_BANK_EC_TBL BTB
+
+WHERE DD.EMPLID = PD.EMPLID
+
+  AND PS.EMPLID = PD.EMPLID
+
+  AND PT.PAYGROUP = '&P_PAYGROUP'
+
+  /* Pending prenote */
+  AND DD.PRENOTE_STATUS = 'N'
+
+  /* Prenote required */
+  AND DD.PRENOTE_REQD = 'Y'
+
+  /* Domestic prenotes only */
+  AND DD.IAT_IND = 'N'
+
+  /* Exclude issue check */
+  AND DD.ACCOUNT_TYPE <> '$'
+
+  /* Current process instance */
+  AND DD.PROCESS_INSTANCE = &P_PROCESS_INSTANCE
+
+  /* Latest eligible distribution effective date */
+  AND DD.EFFDT = (
+      SELECT MAX(DD1.EFFDT)
+      FROM PS_DD_DISTRIB_STG DD1
+      WHERE DD.EMPLID = DD1.EMPLID
+        AND DD1.EFFDT <= TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+        AND DD1.PROCESS_INSTANCE = DD.PROCESS_INSTANCE
+  )
+
+  /* Primary name */
+  AND PD.NAME_TYPE = 'PRI'
+
+  AND PD.EFFDT = (
+      SELECT MAX(PX.EFFDT)
+      FROM PS_NAMES PX
+      WHERE PX.EMPLID = PD.EMPLID
+        AND PX.NAME_TYPE = PD.NAME_TYPE
+        AND PX.EFFDT <= TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+  )
+
+  /* Employee job relationship */
+  AND J.EMPLID = PS.EMPLID
+  AND J.EMPLID = DD.EMPLID
+
+  /* Latest Job effective date */
+  AND J.EFFDT = (
+      SELECT MAX(J1.EFFDT)
+      FROM PS_JOB J1
+      WHERE J1.EMPLID = J.EMPLID
+        AND J1.EMPL_RCD = J.EMPL_RCD
+        AND J1.EFFDT <= TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+  )
+
+  /* Latest Job effective sequence */
+  AND J.EFFSEQ = (
+      SELECT MAX(J2.EFFSEQ)
+      FROM PS_JOB J2
+      WHERE J2.EMPLID = J.EMPLID
+        AND J2.EMPL_RCD = J.EMPL_RCD
+        AND J2.EFFDT = J.EFFDT
+  )
+
+  AND PS.EFF_STATUS = 'A'
+  AND PS.EFFDT = DD.EFFDT
+
+  /* Paygroup and Job relationship */
+  AND PT.COMPANY = J.COMPANY
+  AND PT.PAYGROUP = J.PAYGROUP
+
+  AND PT.EFFDT = (
+      SELECT MAX(PT1.EFFDT)
+      FROM PS_PAYGROUP_TBL PT1
+      WHERE PT1.COMPANY = PT.COMPANY
+        AND PT1.PAYGROUP = PT.PAYGROUP
+        AND PT1.EFFDT <= TO_DATE('&P_PAY_END_DT','YYYY-MM-DD')
+  )
+
+  AND PT.COMPANY = '&P_COMPANY'
+
+  /* Bank source setup */
+  AND SB.PROCESS_INSTANCE = &P_PROCESS_INSTANCE
+
+  AND BTB.BANK_CD = SB.BANK_CD
+  AND BTB.COUNTRY_CD = 'USA'
+
+ORDER BY
+    DD.EMPLID,
+    DD.ACCOUNT_TYPE,
+    DD.ACCOUNT_NUM,
+    DD.BANK_CD;
+
+
+/* Update PS_DIR_DEP_DISTRIB
+   Set prenote status to Complete.
+*/
+
+SELECT *
+FROM PS_DIR_DEP_DISTRIB
+WHERE EMPLID = '&P_EMPLID'
+  AND BANK_CD = '&P_BANK_CD'
+  AND ACCOUNT_NUM = '&P_ACCOUNT_NUM';
+
+UPDATE PS_DIR_DEP_DISTRIB
+SET PRENOTE_STATUS = 'C',
+    LAST_ACTION = 'C',
+    LAST_UPDATE_DATE = :AS_OF_DATE
+WHERE EMPLID = :EMPLID
+  AND EFFDT = :EFFDT
+  AND PRIORITY = :PRIORITY
+  AND BANK_CD = :BANK_CD
+  AND ACCOUNT_NUM = :ACCOUNT_NUM
+  AND ACCOUNT_TYPE = :ACCOUNT_TYPE;
+
+/* Update staging prenote status to Complete. */
+
+UPDATE PS_DD_DISTRIB_STG
+SET PRENOTE_STATUS = 'C',
+    LAST_ACTION = 'C',
+    LAST_UPDATE_DATE = :AS_OF_DATE
+WHERE EMPLID = :EMPLID
+  AND EFFDT = :EFFDT
+  AND PRIORITY = :PRIORITY
+  AND BANK_CD = :BANK_CD
+  AND ACCOUNT_TYPE = :ACCOUNT_TYPE
+  AND PROCESS_INSTANCE = :PROCESS_INSTANCE;
+
+/* Clear prenote required flag in permanent table. */
+
+UPDATE PS_DIR_DEP_DISTRIB
+SET PRENOTE_REQD = 'N',
+    LAST_ACTION = 'C',
+    LAST_UPDATE_DATE = :AS_OF_DATE
+WHERE EMPLID = :EMPLID
+  AND EFFDT = :EFFDT
+  AND PRIORITY = :PRIORITY
+  AND BANK_CD = :BANK_CD
+  AND ACCOUNT_NUM = :ACCOUNT_NUM;
+
+/* Clear prenote required flag in staging table. */
+
+UPDATE PS_DD_DISTRIB_STG
+SET PRENOTE_REQD = 'N',
+    LAST_ACTION = 'C',
+    LAST_UPDATE_DATE = :AS_OF_DATE
+WHERE EMPLID = :EMPLID
+  AND EFFDT = :EFFDT
+  AND PRIORITY = :PRIORITY
+  AND BANK_CD = :BANK_CD
+  AND PROCESS_INSTANCE = :PROCESS_INSTANCE;
+
+
+/* Mark prenote as submitted in permanent table. */
+
+UPDATE PS_DIR_DEP_DISTRIB
+SET PRENOTE_STATUS = 'S',
+    PRENOTE_DATE = :PRENOTE_DATE,
+    LAST_ACTION = 'C',
+    LAST_UPDATE_DATE = :AS_OF_DATE
+WHERE EMPLID = :EMPLID
+  AND EFFDT = :EFFDT
+  AND PRIORITY = :PRIORITY;
+
+
+/* Mark prenote as submitted in staging table. */
+
+UPDATE PS_DD_DISTRIB_STG
+SET PRENOTE_STATUS = 'S',
+    PRENOTE_DATE = :PRENOTE_DATE,
+    LAST_ACTION = 'C',
+    LAST_UPDATE_DATE = :AS_OF_DATE
+WHERE EMPLID = :EMPLID
+  AND EFFDT = :EFFDT
+  AND PRIORITY = :PRIORITY
+  AND PROCESS_INSTANCE = :PROCESS_INSTANCE;
+
+
+
+
+
+
