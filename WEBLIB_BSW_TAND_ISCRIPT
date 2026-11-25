@@ -1,0 +1,80 @@
+Function IScript_GetChatToken()
+   Local string &emplid, &email, &name, &lang, &json, &token;
+   Local JsonObject &pay, &resp;
+   Local JavaObject &bytes;
+   /* Identity comes from the authenticated session only */
+   SQLExec("SELECT EMPLID, EMAILID, OPRDEFNDESC FROM PSOPRDEFN WHERE OPRID = :1", %OperatorId, &emplid, &email, &name);
+   /* Fallback to the business email if EMAILID is blank */
+   If None(&email) Then
+      SQLExec("SELECT EMAILID FROM (SELECT EMAILID FROM PS_EMAIL_ADDRESSES WHERE EMPLID = :1 AND PREF_EMAIL_FLAG = 'Y') WHERE ROWNUM = 1", &emplid, &email);
+   End-If;
+   /* Map PeopleSoft language code to Leena language code */
+   Evaluate %Language_User
+   When "ENG"
+      &lang = "en";
+      Break;
+   When "SPA"
+      &lang = "es";
+      Break;
+   When-Other
+      &lang = "en";
+   End-Evaluate;
+   /* Same shape as your current token */
+   &pay = CreateJsonObject();
+   &pay.AddProperty("name", &name);
+   &pay.AddProperty("employeeId", &emplid);
+   &pay.AddProperty("email", &email);
+   &pay.AddProperty("language", &lang);
+   &json = &pay.ToString();
+   /* UTF-8 safe base64 with no line breaks */
+   &bytes = CreateJavaObject("java.lang.String", &json).getBytes("UTF-8");
+   &token = GetJavaClass("java.util.Base64").getEncoder().encodeToString(&bytes);
+   &resp = CreateJsonObject();
+   &resp.AddProperty("token", &token);
+   %Response.SetContentType("application/json");
+   %Response.SetHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+   %Response.SetHeader("Pragma", "no-cache");
+   %Response.Write(&resp.ToString());
+   /* Audit trail: log who requested, never the token itself */
+   /* Optional: insert OPRID + %Datetime into a custom log table here */
+End-Function;
+
+<*Function IScript_GetTandemUser()
+   Local string &oprid;
+   Local string &emplid;
+   Local string &email;
+   Local string &json;
+   &oprid = %OperatorId;
+   &emplid = "";
+   &email = "";
+   SQLExec("SELECT EMPLID, EMAILID FROM PSOPRDEFN WHERE OPRID = :1", &oprid, &emplid, &email);
+   &json = "{""oprid"":""" | &oprid | """,""emplid"":""" | &emplid | """,""email"":""" | &email | """}";
+   %Response.SetContentType("application/json");
+   %Response.SetHeader("Cache-Control", "no-store");
+   %Response.Write(&json);
+End-Function;*>
+
+<*Function IScript_GetTandemUser()
+   Local string &oprid;
+   Local string &json;
+   &oprid = %OperatorId;
+   &json = "{""oprid"":""" | &oprid | """}";
+   %Response.SetContentType("application/json");
+   %Response.Write(&json);
+End-Function;*>
+
+<*Function IScript_GetTandemUser()
+   Local string &oprid;
+   Local string &json;
+   /* Get currently logged-in PeopleSoft operator */
+   &oprid = %OperatorId;
+   /* Return JSON */
+   &json = "{""oprid"":""" | &oprid | """}";
+   /* Set response type */
+   %Response.SetContentType("application/json");
+   /* Prevent browser caching */
+   %Response.SetHeader("Cache-Control", "no-store");
+   %Response.Write(&json);
+End-Function;
+
+*>
