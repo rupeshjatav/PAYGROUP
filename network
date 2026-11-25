@@ -1,0 +1,88 @@
+Request URL
+https://web.leena.ai/?allowMaximize=true&authToken=ewogICAgIm5hbWUiIDogIlJ1cGVzaCBKYXRhdiIsCiAgICAiZW1wbG95ZWVJZCIgOiAiMDAwOTMzMDY3IiwKICAgICJlbWFpbCIgOiAiMDAwOTMzMDY3QGJzd2hlYWx0aC5vcmciLAogICAgImxhbmd1YWdlIiA6ICJlbiIKfQ%3D%3D&clientId=DLtJ8wHZZgJpZX76Yohge&helpConfig=%5Bobject%20Object%5D&href=https%3A%2F%2Fhrprjdevbhcspvt.mypeopleplace.com%2Fpsc%2Fhrprjdev%2FEMPLOYEE%2FHRMS%2Fc%2FNUI_FRAMEWORK.PT_LANDINGPAGE.GBL%3F&sdkMode=floating&sdkVersion=4.26.0-v2&showHelp=true&source=webSDKEmbed&theme=eyJidWJibGUiOnsid2lkdGgiOjgwLCJoZWlnaHQiOjgwLCJib3R0b20iOjE1LCJyaWdodCI6MjV9LCJoZWFkZXIiOnsiaGVpZ2h0Ijo1NSwiY29sb3IiOiJyZ2JhKDAsMCwwLC43NSkifSwiZm9udFNpemUiOnsiY2hhdCI6MTYsImlucHV0IjoxNiwibWVudSI6MTZ9LCJjbG9zZUJ1dHRvbiI6eyJ1cmwiOiIiLCJvcGFjaXR5IjowLjYsImhlaWdodCI6MjAsIndpZHRoIjoyMCwibWFyZ2luIjoxMH19
+Request method
+GET
+Status code
+304 Not Modified
+Remote address
+104.18.22.121:443
+Referrer policy
+strict-origin-when-cross-origin
+access-control-allow-origin
+https://hrbot.chipmong.com
+alt-svc
+h3=":443"; ma=86400
+cf-cache-status
+DYNAMIC
+cf-ray
+a6025c380fb17c23-DFW
+content-security-policy
+default-src 'self' .chatteron.io .leena.ai; font-src 'self' data: https://fonts.gstatic.com https://*.niceincontact.com https://cdnjs.cloudflare.com https://themes.googleusercontent.com https://cdn.tiny.cloud https://unpkg.com; img-src 'self' https://leena.ai https://*.amazonaws.com https://*.niceincontact.com https://*.leena.ai https://dl.dropbox.com https://dl.dropboxusercontent.com https://*.chatteron.io data: https://*.cloudinary.com blob:; media-src 'self' https://*.amazonaws.com https://*.chatteron.io https://*.leena.ai https://*.googleapis.com; connect-src 'self' https://*.livekit.cloud https://leena.ai https://*.niceincontact.com https://res.cdn.office.net https://*.clarity.ms https://c.bing.com https://*.posthog.com https://*.amazonaws.com https://*.chatteron.io https://*.leena.ai wss://*.leena.ai https://sentry.io https://*.adobe.com https://*.adobe.io https://*.googleapis.com https://*.helphero.co wss: https://*.sentry.io; script-src 'self' https://*.posthog.com https://*.leena.ai https://*.niceincontact.com https://*.clarity.ms https://c.bing.com https://www.google-analytics.com https://code.jquery.com https://cdnjs.cloudflare.com https://cdn.tiny.cloud https://appsforoffice.microsoft.com https://www.googletagmanager.com https://*.aspnetcdn.com https://*.googleapis.com https://www.gstatic.com https://*.adobe.com https://unpkg.com https://www.youtube.com; frame-src 'self' mailto: tel: https://*.chatteron.io https://*.niceincontact.com https://*.compass-usa.com https://dev.chatbot.prologis.com https://ssoqas.compassmanager.com https://*.leena.ai https://*.adobe.com https://*.draftable.com https://*.officeapps.live.com https://*.amazonaws.com blob: https://www.youtube.com https://*.amplifyapp.com https://curiousbox.ai https://chat.curiousbox.ai; frame-ancestors https://*.leena.ai https://teams.microsoft.com https:; style-src 'self' 'unsafe-inline' https://*.leena.ai https://*.niceincontact.com https://cdn.tiny.cloud https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com; report-to csp-endpoint;
+content-security-policy-report-only
+default-src 'self' *.chatteron.io *.leena.ai; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://themes.googleusercontent.com https://cdn.tiny.cloud https://unpkg.com; img-src 'self'; media-src 'self'; connect-src 'self' wss://*.leena.ai https://sentry.io wss:; script-src 'self' https://www.google-analytics.com https://code.jquery.com https://cdnjs.cloudflare.com https://cdn.tiny.cloud https://appsforoffice.microsoft.com https://www.googletagmanager.com https://www.gstatic.com https://unpkg.com https://www.youtube.com; frame-src 'self' mailto: tel: https://www.youtube.com https://curiousbox.ai https://chat.curiousbox.ai; frame-ancestors https://teams.microsoft.com https:; style-src 'self' https://cdn.tiny.cloud https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com; report-to csp-endpoint;
+date
+Wed, 25 Nov 2026 17:26:46 GMT
+etag
+"66f12af2-101f"
+last-modified
+Mon, 23 Sep 2024 08:46:42 GMT
+permissions-policy
+camera=(), sync-xhr=(), keyboard-map=(), geolocation=(self "https://*.leena.ai"), microphone=(self), fullscreen=(self "https://acrobatservices.adobe.com" "https://documentcloud.adobe.com" "https://*.leena.ai"), picture-in-picture=(self), idle-detection=(self), autoplay=(self), clipboard-read=(self "https://*.leena.ai"), clipboard-write=(self "https://*.leena.ai"), report-to=pp-endpoint
+permissions-policy
+fullscreen=(self "https://*.leena.ai")
+referrer-policy
+same-origin
+server
+cloudflare
+server-timing
+cfCacheStatus;desc="DYNAMIC"
+server-timing
+cfEdge;dur=9,cfOrigin;dur=264
+speculation-rules
+"/cdn-cgi/speculation"
+strict-transport-security
+max-age=31536000; includeSubDomains; preload
+x-content-type-options
+nosniff
+x-xss-protection
+1; mode=block
+:authority
+web.leena.ai
+:method
+GET
+:path
+/?allowMaximize=true&authToken=ewogICAgIm5hbWUiIDogIlJ1cGVzaCBKYXRhdiIsCiAgICAiZW1wbG95ZWVJZCIgOiAiMDAwOTMzMDY3IiwKICAgICJlbWFpbCIgOiAiMDAwOTMzMDY3QGJzd2hlYWx0aC5vcmciLAogICAgImxhbmd1YWdlIiA6ICJlbiIKfQ%3D%3D&clientId=DLtJ8wHZZgJpZX76Yohge&helpConfig=%5Bobject%20Object%5D&href=https%3A%2F%2Fhrprjdevbhcspvt.mypeopleplace.com%2Fpsc%2Fhrprjdev%2FEMPLOYEE%2FHRMS%2Fc%2FNUI_FRAMEWORK.PT_LANDINGPAGE.GBL%3F&sdkMode=floating&sdkVersion=4.26.0-v2&showHelp=true&source=webSDKEmbed&theme=eyJidWJibGUiOnsid2lkdGgiOjgwLCJoZWlnaHQiOjgwLCJib3R0b20iOjE1LCJyaWdodCI6MjV9LCJoZWFkZXIiOnsiaGVpZ2h0Ijo1NSwiY29sb3IiOiJyZ2JhKDAsMCwwLC43NSkifSwiZm9udFNpemUiOnsiY2hhdCI6MTYsImlucHV0IjoxNiwibWVudSI6MTZ9LCJjbG9zZUJ1dHRvbiI6eyJ1cmwiOiIiLCJvcGFjaXR5IjowLjYsImhlaWdodCI6MjAsIndpZHRoIjoyMCwibWFyZ2luIjoxMH19
+:scheme
+https
+accept
+text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+accept-encoding
+gzip, deflate, br, zstd
+accept-language
+en-US,en;q=0.9
+cookie
+__cf_bm=hgg47gAXvDhr7ETpqrBN68UDWlyD2wjT7tIql6U6ja0-1795627533.961556-1.0.1.1-atFRqKP_HTxR_xJDzF1t0WTB7uq8orPfyeSabBHsO7aMfqXzrDbw51slrJNR9pKe_FBsC0MmVisCoLynAp4IBClCzZqmejgIkgKzuQZplw8vgu5wE0XvdOQU5qb4SzSP
+if-modified-since
+Mon, 23 Sep 2024 08:46:42 GMT
+priority
+u=0, i
+referer
+https://hrprjdevbhcspvt.mypeopleplace.com/
+sec-ch-ua
+"Chromium";v="158", "Not.A/Brand";v="24", "Microsoft Edge";v="158"
+sec-ch-ua-mobile
+?0
+sec-ch-ua-platform
+"Windows"
+sec-fetch-dest
+iframe
+sec-fetch-mode
+navigate
+sec-fetch-site
+cross-site
+sec-fetch-storage-access
+active
+upgrade-insecure-requests
+1
+user-agent
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36 Edg/158.0.0.0
