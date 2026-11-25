@@ -1,0 +1,123 @@
+(function () {
+    "use strict";
+    if (window.self !== window.top) { return; }
+    var clientId = "DLtJ8wHZZgJpZX76Yohge";
+    var sdkUrl = "https://web.leena.ai/scripts/sdk.js";
+    var cssUrl = "https://s3.chatteron.io/chatteron.io/public/bots/63885832a10c3574b3c295fb/animate.min.css";
+    var bubbleUrl = "https://us-east-1-bots.leena.ai/api/bots/69948a9ee585acc3e0c7731f/assets/69cd347da48ce97f527fb58e/Frame%202.png";
+    function getSiteName() {
+        var m = window.location.pathname.match(/\/ps[pc]\/([^\/]+)\//i);
+        return m ? m[1] : "ps";
+    }
+    // Adjust portal/node (EMPLOYEE/HRMS) to match your environment
+    var tokenUrl = "/psc/" + getSiteName() +
+       "/EMPLOYEE/HRMS/s/WEBLIB_BSW_TAND.ISCRIPT1.FieldFormula.IScript_GetChatToken";
+    function addStyles() {
+        if (!document.head) { return; }
+        if (!document.getElementById("leenaCustomStyles")) {
+            var link = document.createElement("link");
+            link.id = "leenaCustomStyles";
+            link.rel = "stylesheet";
+            link.href = cssUrl;
+            document.head.appendChild(link);
+        }
+        if (!document.getElementById("leenaCustomChatStyles")) {
+            var style = document.createElement("style");
+            style.id = "leenaCustomChatStyles";
+            style.textContent = `
+                .closebtn, .maximizeBtn { background: #ffb71b !important; }
+                .botImage { height: 100px; width: 100px; }
+                .helpDiv-wrapper { font-size: 14px; padding: 12px; bottom: -85px; right: 75px; }
+                .helpDiv-wrapper::after {
+                    z-index: -10; content: ""; position: absolute; width: 0; height: 0;
+                    top: calc(50% - 5px); right: -10px; border: 5px solid #fff;
+                    border-color: #fff #fff transparent transparent;
+                    transform-origin: 0 0; transform: rotate(45deg);
+                    box-shadow: 0px 4px 4px rgba(30,30,31,.1);
+                }
+                .helpDiv-wrapper::before {
+                    z-index: 10; content: ""; position: absolute; width: 0; height: 0;
+                    top: calc(50% - 5px); right: -9px; border: 5px solid #fff;
+                    border-color: #fff #fff transparent transparent;
+                    transform-origin: 0 0; transform: rotate(45deg);
+                }
+                .chatBubble, #modal-container { z-index: 999999 !important; }
+                .chatBubble { right: 100px; }
+                @media screen and (max-width: 800px) {
+                    .botImage { height: 50px; width: 50px; }
+                    .helpDiv-wrapper { padding: 12px; margin-right: 10px; bottom: -50px; right: 55px; }
+                    .chatBubble { right: 10px; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    function fetchToken() {
+        return fetch(tokenUrl, {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store",
+            headers: { "Accept": "application/json" }
+        }).then(function (res) {
+            if (!res.ok) { throw new Error("Token request failed: " + res.status); }
+            return res.json();
+        }).then(function (data) {
+            if (!data || !data.token) { throw new Error("No token in response"); }
+            return data.token;
+        });
+    }
+    function loadSDK() {
+        return new Promise(function (resolve, reject) {
+            if (window.chatteron && typeof window.chatteron.init === "function") {
+                resolve();
+                return;
+            }
+            var existing = document.getElementById("leenaSdkScript");
+            if (existing) {
+                existing.addEventListener("load", resolve);
+                existing.addEventListener("error", reject);
+                return;
+            }
+            var sdk = document.createElement("script");
+            sdk.id = "leenaSdkScript";
+            sdk.src = sdkUrl;
+            sdk.async = true;
+            sdk.onload = resolve;
+            sdk.onerror = reject;
+            document.head.appendChild(sdk);
+        });
+    }
+    function initializeChatbot(authToken) {
+        if (window.leenaChatbotInitialized && document.querySelector(".chatBubble")) { return; }
+        if (!window.chatteron || typeof window.chatteron.init !== "function") { return; }
+        try {
+            window.chatteron.init({
+                clientId: clientId,
+                authToken: authToken,
+                showHelp: true,
+                bubbleUrl: bubbleUrl,
+                helpConfig: { title: "HR Questions?", subtitle: "Ask Tandem!" },
+                allowMaximize: true
+            });
+            window.leenaChatbotInitialized = true;
+        } catch (error) {
+            console.error("Leena initialization error:", error);
+        }
+    }
+    function start() {
+        if (window.leenaChatbotLoading) { return; }
+        if (window.leenaChatbotInitialized && document.querySelector(".chatBubble")) { return; }
+        window.leenaChatbotLoading = true;
+        addStyles();
+        Promise.all([fetchToken(), loadSDK()])
+            .then(function (r) { initializeChatbot(r[0]); })
+            .catch(function (err) { console.error("Chatbot not started:", err); })
+            .then(function () { window.leenaChatbotLoading = false; });
+    }
+    function boot() {
+        if (!document.body) { setTimeout(boot, 100); return; }
+        start();
+    }
+    boot();
+    document.addEventListener("DOMContentLoaded", boot);
+})();
